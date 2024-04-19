@@ -1,6 +1,6 @@
 # Laboratory_Of_Doom (Post-Jam Version)
 
-This was originally an entry for Ludum Dare 54 on Septemper 29, 2023.  
+This was originally an entry for __Ludum Dare 54__ on _Septemper 29, 2023_.  
 __THEME: LIMITED SPACE__
 
 But since the submission deadline has ended, this is the __post-jam version__ where I develop new features and expand the game further for future releases.
