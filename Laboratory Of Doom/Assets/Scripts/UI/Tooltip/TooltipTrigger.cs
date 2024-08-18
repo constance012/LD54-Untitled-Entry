@@ -1,17 +1,20 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using DG.Tweening;
 
 public class TooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
+	[Header("Settings"), Space]
 	public string header;
-	[Space, TextArea(5, 10)] public string content;
-	[Space]
+	[TextArea(5, 10)] public string content;
 	public float popupDelay;
+
+	// Private static fields.
+	private static Tween _showTween;
 
 	public void OnPointerEnter(PointerEventData eventData)
 	{
-		if (!string.IsNullOrEmpty(header) || !string.IsNullOrEmpty(content))
-			StartCoroutine(TooltipHandler.Show(content, header, popupDelay));
+		ShowTooltip();
 	}
 	
 	public void OnPointerExit(PointerEventData eventData)
@@ -21,8 +24,7 @@ public class TooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
 	public void OnMouseEnter()
 	{
-		if (!string.IsNullOrEmpty(header) || !string.IsNullOrEmpty(content))
-			StartCoroutine(TooltipHandler.Show(content, header, popupDelay));
+		ShowTooltip();
 	}
 
 	public void OnMouseExit()
@@ -32,7 +34,17 @@ public class TooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 
 	public void HideTooltip()
 	{
-		StopAllCoroutines();
 		TooltipHandler.Hide();
+		
+		if (_showTween.IsActive())
+			_showTween.Kill();
+	}
+
+	private void ShowTooltip()
+	{
+		if (!string.IsNullOrEmpty(header) || !string.IsNullOrEmpty(content))
+		{
+			_showTween = DOVirtual.DelayedCall(popupDelay, () => TooltipHandler.Show(content, header));
+		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 using TMPro;
+using DG.Tweening;
 using System.Linq;
 
 public class LevelsNavigationDoor : Interactable
@@ -25,7 +26,6 @@ public class LevelsNavigationDoor : Interactable
 	// Private fields.
 	private Transform _enemiesContainer;
 	private BoxCollider2D _collider;
-
 	private bool _levelCleared;
 
 	protected override void Awake()
@@ -45,10 +45,10 @@ public class LevelsNavigationDoor : Interactable
 			_levelNameText = GameObject.FindWithTag("LevelNameText").GetComponent<TextMeshProUGUI>();
 			_levelNameText.text = LevelsManager.Instance.CurrentScene.name.ToUpper();
 
-			StartCoroutine(DisplayLevelText());
+			DisplayLevelText();
 		}
 
-		spriteRenderer.sprite = closeSprite;
+		_spriteRenderer.sprite = closeSprite;
 		isOpened = false;
 	}
 
@@ -64,7 +64,7 @@ public class LevelsNavigationDoor : Interactable
 			_levelCleared = true;
 			_levelNameText.text = "<color=#C88529> THANK YOU! </color> FOR RELEASING OUR SOULS";
 
-			StartCoroutine(DisplayLevelText());
+			DisplayLevelText();
 		}
 	}
 
@@ -72,7 +72,7 @@ public class LevelsNavigationDoor : Interactable
 	{
 		base.TriggerInteraction(playerDistance);
 
-		if (InputManager.Instance.GetKeyDown(KeybindingActions.Interact) && !hasInteracted)
+		if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.Interact) && !hasInteracted)
 			Interact();
 	}
 
@@ -85,7 +85,7 @@ public class LevelsNavigationDoor : Interactable
 			isOpened = true;
 			hasInteracted = true;
 
-			spriteRenderer.sprite = openSprite;
+			_spriteRenderer.sprite = openSprite;
 			gameObject.layer = LayerMask.NameToLayer("Door");
 
 			PathRequester.Instance.ChangeGridCellState(transform.position, true);
@@ -108,23 +108,13 @@ public class LevelsNavigationDoor : Interactable
 				foreach (Item keycard in keycards)
 					text += $"<color=#{ColorUtility.ToHtmlStringRGB(keycard.rarity.color)}> {keycard.itemName} </color>,\n";
 
-			clone.SetObjectName(text);
+			_clone.SetObjectName(text);
 		}
 	}
 
 	private bool CheckForKeycards()
 	{
-		bool allCardMatched = true;
-
-		foreach(Item keycard in keycards)
-		{
-			if (!Inventory.Instance.HasAny(keycard.itemName))
-			{
-				allCardMatched = false;
-				break;
-			}
-		}
-
+		bool allCardMatched = keycards.All(keycard => Inventory.Instance.HasAny(keycard.itemName));
 		return allCardMatched;
 	}
 
@@ -155,18 +145,16 @@ public class LevelsNavigationDoor : Interactable
 		}
 	}
 
-	private IEnumerator DisplayLevelText()
+	private void DisplayLevelText()
 	{
-		_levelNameText.gameObject.SetActive(true);
+		CanvasGroup canvasGroup = _levelNameText.GetComponent<CanvasGroup>();
 
-		Animator textAnim = _levelNameText.GetComponent<Animator>();
+		canvasGroup.alpha = 0f;
+		
+		Sequence sequence = DOTween.Sequence();
 
-		textAnim.Play("Increase Alpha");
-
-		yield return new WaitForSecondsRealtime(2f);
-
-		textAnim.Play("Decrease Alpha");
-
-		yield return new WaitForSecondsRealtime(.75f);
+		sequence.Append(canvasGroup.DOFade(1f, .75f))
+				.AppendInterval(2f)
+				.Append(canvasGroup.DOFade(0f, .75f));
 	}
 }

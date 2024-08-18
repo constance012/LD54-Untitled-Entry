@@ -6,27 +6,26 @@ public class EnemyAI : Seeker
 {
 	private static HashSet<Rigidbody2D> alertedEnemies;
 
+	[Header("References"), Space]
+	[SerializeField] private Rigidbody2D rb2D;
+	[SerializeField] private Animator animator;
+	[SerializeField] private Transform pivotPoint;
+
 	[Header("Spotting Settings")]
-	[SerializeField] private Transform centerPivot;
 	[SerializeField] private float aggroRange;
 	[SerializeField] private float spotTimer;
+	[SerializeField] private LayerMask obstacleLayers;
 
 	[Header("Repel Settings"), Space]
 	[SerializeField] private float repelRange;
 	[SerializeField] private float repelAmplitude;
 
 	// Private fields.
-	private Rigidbody2D _rb2D;
 	private Vector2 _targetPreviousPos;
 
 	private bool _facingRight = true;
 	private bool _spottedPlayer;
 	private float _spotTimer;
-
-	private void Awake()
-	{
-		_rb2D = GetComponent<Rigidbody2D>();
-	}
 
 	private void Start()
 	{
@@ -38,7 +37,7 @@ public class EnemyAI : Seeker
 
 	private void OnDestroy()
 	{
-		alertedEnemies.Remove(_rb2D);
+		alertedEnemies.Remove(rb2D);
 	}
 
 	private void FixedUpdate()
@@ -48,14 +47,21 @@ public class EnemyAI : Seeker
 		
 		if (!_spottedPlayer)
 		{
-			float distanceToPlayer = Vector2.Distance(centerPivot.position, PlayerController.Position);
+			float distanceToPlayer = Vector2.Distance(rb2D.position, PlayerController.Position);
 			
 			if (distanceToPlayer <= aggroRange)
 			{
-				_spotTimer -= Time.deltaTime;
-
-				if (_spotTimer <= 0)
-					Alert();
+				Ray2D visionLine = new Ray2D(rb2D.position, (PlayerController.Position - rb2D.position).normalized);
+				
+				if (!Physics2DExtensions.Raycast(visionLine, out RaycastHit2D _, distanceToPlayer, obstacleLayers))
+				{
+					_spotTimer -= Time.deltaTime;
+					
+					if (_spotTimer <= 0)
+						Alert();
+				}
+				else
+					_spotTimer = spotTimer;
 			}
 			else
 				_spotTimer = spotTimer;
@@ -63,10 +69,12 @@ public class EnemyAI : Seeker
 			return;
 		}
 
+		animator.SetFloat("Speed", rb2D.velocity.sqrMagnitude);
+
 		// Request a path if the player has moved a certain distance fron the last position.
-		if ((PlayerController.Position - _targetPreviousPos).magnitude > maxMovementDelta)
+		if (Vector2.Distance(PlayerController.Position, _targetPreviousPos) >= maxMovementDelta)
 		{
-			PathRequester.Request(transform.position, PlayerController.Position, OnPathFound);
+			PathRequester.Request(new PathRequestData(pivotPoint.position, PlayerController.Position, this.gameObject, OnPathFound));
 			_targetPreviousPos = PlayerController.Position;
 		}
 	}
@@ -77,7 +85,7 @@ public class EnemyAI : Seeker
 		_spotTimer = 0f;
 
 		// Add this enemy to the hash set.
-		alertedEnemies.Add(_rb2D);
+		alertedEnemies.Add(rb2D);
 	}
 
 	protected override IEnumerator FollowPath(int previousIndex = -1)
@@ -85,13 +93,13 @@ public class EnemyAI : Seeker
 		if (_path.Length == 0)
 			yield break;
 
-		Vector2 currentWaypoint = previousIndex == -1 ? _path[0] : _path[previousIndex];
+		Vector3 currentWaypoint = previousIndex == -1 ? _path[0] : _path[previousIndex];
 
 		Debug.Log($"{gameObject.name} following path...");
 
 		while (true)
 		{
-			float distanceToCurrent = Vector2.Distance(_rb2D.position, currentWaypoint);
+			float distanceToCurrent = Vector3.Distance(pivotPoint.position, currentWaypoint);
 
 			if (distanceToCurrent < .05f)
 			{
@@ -108,12 +116,12 @@ public class EnemyAI : Seeker
 				currentWaypoint = _path[_waypointIndex];
 			}
 
-			Vector2 direction = (currentWaypoint - _rb2D.position).normalized;
+			Vector2 direction = (currentWaypoint - pivotPoint.position).normalized;
 			Vector2 velocity = CalculateVelocity(direction);
 
 			CheckFlip();
 
-			_rb2D.velocity = velocity;
+			rb2D.velocity = velocity;
 
 			yield return new WaitForFixedUpdate();
 		}
@@ -121,7 +129,7 @@ public class EnemyAI : Seeker
 
 	private void CheckFlip()
 	{
-		float sign = Mathf.Sign(PlayerController.Position.x -  _rb2D.position.x);
+		float sign = Mathf.Sign(PlayerController.Position.x -  rb2D.position.x);
 		bool mustFlip = (_facingRight && sign < 0f) || (!_facingRight && sign > 0f);
 
 		if (mustFlip)
@@ -143,12 +151,12 @@ public class EnemyAI : Seeker
 
 		foreach (Rigidbody2D enemy in alertedEnemies)
 		{
-			if (enemy == _rb2D)
+			if (enemy == rb2D)
 				continue;
 
-			if (Vector2.Distance(enemy.position, _rb2D.position) <= repelRange)
+			if (Vector2.Distance(enemy.position, rb2D.position) <= repelRange)
 			{
-				Vector2 repelDirection = (_rb2D.position - enemy.position).normalized;
+				Vector2 repelDirection = (rb2D.position - enemy.position).normalized;
 				repelForce += repelDirection;
 			}
 		}
@@ -162,9 +170,9 @@ public class EnemyAI : Seeker
 	private void OnDrawGizmosSelected()
 	{
 		Gizmos.color = Color.yellow;
-		Gizmos.DrawWireSphere(centerPivot.position, repelRange);
+		Gizmos.DrawWireSphere(transform.position, repelRange);
 
 		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(centerPivot.position, aggroRange);
+		Gizmos.DrawWireSphere(transform.position, aggroRange);
 	}
 }

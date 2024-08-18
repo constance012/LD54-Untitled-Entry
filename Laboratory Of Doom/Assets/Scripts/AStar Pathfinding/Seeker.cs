@@ -16,16 +16,15 @@ public class Seeker : MonoBehaviour
 	// Private fields.
 	protected Vector3[] _path;
 	protected Coroutine _followCoroutine;
-	
 	protected int _waypointIndex;
 	protected bool _finishedFollowingPath;
 
 	private IEnumerator Start()
 	{
-		if (seekOnStart)
+		if (seekOnStart && target != null)
 		{
 			yield return new WaitForSeconds(.1f);
-			PathRequester.Request(transform.position, target.position, OnPathFound);
+			PathRequester.Request(new PathRequestData(transform.position, target.position, this.gameObject, OnPathFound));
 		}
 	}
 

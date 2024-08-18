@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 /// <summary>
@@ -27,42 +26,34 @@ public abstract class Interactable : MonoBehaviour
 		Manual
 	}
 
-	[Header("Type")]
+	[Header("Type"), Space]
 	public InteractableType type;
 	public InputSource inputSource;
 
-	[Header("Reference")]
+	[Header("Reference"), Space]
 	public Transform player;
 	[SerializeField] protected GameObject popupLabelPrefab;
 
-	[Space]
-
-	[Header("Interaction Radius")]	
+	[Header("Interaction Radius"), Space]
 	[SerializeField, Tooltip("The distance required for the player to interact with this object.")]
 	protected float interactDistance;
 	
 	[SerializeField, ReadOnly] protected bool hasInteracted;
 
-	//[Header("Dialogue (Optional)")]
-	//[ReadOnly] public DialogueTrigger dialogueTrigger;
-	//[ReadOnly] public bool oneTimeDialogueTriggered;
-
 	// Protected fields.
-	protected Transform worldCanvas;
-	protected SpriteRenderer spriteRenderer;
-	protected Material mat;
-	protected InteractionPopupLabel clone;
-
-	//public bool HasDialogue => dialogueTrigger != null;
+	protected Transform _worldCanvas;
+	protected SpriteRenderer _spriteRenderer;
+	protected Material _mat;
+	protected InteractionPopupLabel _clone;
 
 	protected virtual void Awake()
 	{
 		if (player == null)
 			player = GameObject.FindWithTag("Player").transform;
 
-		worldCanvas = GameObject.FindWithTag("WorldCanvas").transform;
-		spriteRenderer = GetComponent<SpriteRenderer>();
-		mat = spriteRenderer.material;
+		_worldCanvas = GameObject.FindWithTag("WorldCanvas").transform;
+		_spriteRenderer = GetComponent<SpriteRenderer>();
+		_mat = _spriteRenderer.material;
 	}
 
 	protected void Update()
@@ -81,22 +72,6 @@ public abstract class Interactable : MonoBehaviour
 	public virtual void Interact()
 	{
 		Debug.Log($"Interacting with {transform.name}.");
-
-		//if (HasDialogue)
-		//	dialogueTrigger.TriggerDialogue();
-	}
-
-	/// <summary>
-	/// Bind this function to an Ink story for external function execution.
-	/// </summary>
-	public virtual void InkExternalFunction() { }
-
-	/// <summary>
-	/// This method is responsible for being executed by other <c>Interactable</c> objects.
-	/// </summary>
-	public virtual void ExecuteRemoteLogic(bool state)
-	{
-		Debug.Log($"Execute logic of {transform.name} remotely.");
 	}
 
 	protected virtual void CheckForInteraction(float mouseDistance, float playerDistance)
@@ -114,22 +89,22 @@ public abstract class Interactable : MonoBehaviour
 
 	protected virtual void TriggerInteraction(float playerDistance)
 	{
-		if (clone == null)
+		if (_clone == null)
 			CreatePopupLabel();
 		else
-			clone.transform.position = transform.position;
+			_clone.transform.position = transform.position;
 
-		mat.SetFloat("_Thickness", 1f);
+		_mat.SetFloat("_Thickness", 1f);
 
 		// TODO - derived classes implement their own way to trigger interaction.
 	}
 
 	protected virtual void CancelInteraction(float playerDistance)
 	{
-		if (clone != null)
-			Destroy(clone.gameObject);
+		if (_clone != null)
+			Destroy(_clone.gameObject);
 
-		mat.SetFloat("_Thickness", 0f);
+		_mat.SetFloat("_Thickness", 0f);
 
 		// TODO - derived classes implement their own way to cancel interaction.
 	}
@@ -139,9 +114,9 @@ public abstract class Interactable : MonoBehaviour
 		GameObject label = Instantiate(popupLabelPrefab);
 		label.name = popupLabelPrefab.name;
 
-		clone = label.GetComponent<InteractionPopupLabel>();
+		_clone = label.GetComponent<InteractionPopupLabel>();
 
-		clone.SetupLabel(this.transform, inputSource);
+		_clone.SetupLabel(transform, inputSource);
 	}
 
 	protected virtual void OnDrawGizmosSelected()

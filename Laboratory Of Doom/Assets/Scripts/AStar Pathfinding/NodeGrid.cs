@@ -17,12 +17,13 @@ public class NodeGrid : MonoBehaviour
 	[SerializeField, Tooltip("The small offset to the overlap circle's radius to achieve more precise collision detection against the terrain.")]
 	[Range(0f, .1f)] private float castPrecision;
 
+	// Properties.
+	public int MaxSize => _width * _height;
+
     // Private fields.
     private Node[,] _grid;
 	private int _width, _height;
 	private float _nodeRadius;
-
-	public int MaxSize => _width * _height;
 
 	private void Awake()
 	{

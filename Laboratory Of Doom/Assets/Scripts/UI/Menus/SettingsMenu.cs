@@ -28,20 +28,20 @@ public class SettingsMenu : MonoBehaviour
 		ReloadUI();
 	}
 
-	#region Callback Method for UI.
+	#region Callback Method for UI elements.
 	public void SetMusicVolume(float amount)
 	{
-		mixer.SetFloat("musicVol", amount);
+		mixer.SetFloat("musicVol", GetVolume(amount));
 
-		_musicText.text = $"Music: {ConvertDecibelToText(amount)}";
+		_musicText.text = $"MUSIC: {ConvertDecibelToText(amount)}";
 		UserSettings.MusicVolume = amount;
 	}
 
 	public void SetSoundsVolume(float amount)
 	{
-		mixer.SetFloat("soundsVol", amount);
+		mixer.SetFloat("soundsVol", GetVolume(amount));
 
-		_soundsText.text = $"Sound: {ConvertDecibelToText(amount)}";
+		_soundsText.text = $"SOUND: {ConvertDecibelToText(amount)}";
 		UserSettings.SoundsVolume = amount;
 	}
 
@@ -60,13 +60,14 @@ public class SettingsMenu : MonoBehaviour
 
 	private string ConvertDecibelToText(float amount)
 	{
-		float normalized = 1f - (Mathf.Abs(amount) / 80f);
-		return (normalized * 100f).ToString("0");
+		return (amount * 100f).ToString("0");
 	}
+
+	private float GetVolume(float amount) => Mathf.Log10(amount) * 20f;
 
 	private void ReloadUI()
 	{
-		float musicVol = UserSettings.MusicVolume;
+		//float musicVol = UserSettings.MusicVolume;
 		float soundsVol = UserSettings.SoundsVolume;
 
 		//_musicSlider.value = musicVol;

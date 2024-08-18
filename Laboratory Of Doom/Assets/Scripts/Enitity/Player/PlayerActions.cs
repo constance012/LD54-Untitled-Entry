@@ -17,7 +17,6 @@ public class PlayerActions : Singleton<PlayerActions>
 	[Header("Ranged Weapon"), Space]
 	[SerializeField] private GameObject primaryWeapon;
 	[SerializeField] private Transform firePoint;
-	[SerializeField] private GameObject muzzleFlash;
 
 	[Header("Melee Weapon"), Space]
 	[SerializeField] private GameObject secondaryWeapon;
@@ -29,8 +28,8 @@ public class PlayerActions : Singleton<PlayerActions>
 	[SerializeField] private GameObject flashlightGameObj;
 
 	[Header("UI"), Space]
-	[SerializeField] private TextMeshProUGUI weaponUI;
-	[SerializeField] private TextMeshProUGUI flashlightUI;
+	[SerializeField] private TextMeshProUGUI weaponUIText;
+	[SerializeField] private TextMeshProUGUI flashlightUIText;
 	[SerializeField] private Image weaponIcon;
 
 	[Space]
@@ -44,6 +43,11 @@ public class PlayerActions : Singleton<PlayerActions>
 
 	private float _hitpointXOrigin;
 
+	private void OnDisable()
+	{
+		CursorManager.Instance.SwitchCursorTexture(CursorTextureType.Default);
+	}
+
 	private void Start()
 	{
 		_hitpointXOrigin = hitPoint.localPosition.x;
@@ -52,7 +56,7 @@ public class PlayerActions : Singleton<PlayerActions>
 		primaryWeapon.SetActive(false);
 		secondaryWeapon.SetActive(false);
 
-		weaponUI.text = "UNARMED";
+		weaponUIText.text = "UNARMED";
 		weaponIcon.gameObject.SetActive(false);
 	}
 
@@ -73,35 +77,27 @@ public class PlayerActions : Singleton<PlayerActions>
 		if (flashlight == null)
 		{
 			flashlightGameObj.SetActive(false);
-			flashlightUI.text = "DROPPED";
-			return;
-		}
-
-		flashlightUI.text = "OFF";
-		
-		if (flashlight.OutOfBattery)
-		{
-			if (flashlight.IsTurnedOn)
-			{
-				flashlight.IsTurnedOn = false;
-				flashlightGameObj.SetActive(false);
-			}
-
+			flashlightUIText.text = "DROPPED";
 			return;
 		}
 
 		if (flashlight.IsTurnedOn)
 		{
-			flashlight.UpdateBattery(Time.deltaTime);
-			flashlightUI.text = $"{flashlight.currentBatteryLife.ToString("0.0")} %";
+			if (flashlight.OutOfBattery)
+				flashlightGameObj.SetActive(false);
+			else
+			{
+				flashlight.UpdateBattery(Time.deltaTime);
+				flashlightUIText.text = $"{flashlight.currentBatteryLife:0.0} %";
+			}
 		}
 
-		if (InputManager.Instance.GetKeyDown(KeybindingActions.Flashlight))
+		if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.Flashlight))
 		{
 			flashlight.IsTurnedOn = !flashlight.IsTurnedOn;
 			
-			flashlightUI.text = flashlight.IsTurnedOn ? $"{flashlight.currentBatteryLife.ToString("0.0")} %" : "OFF";
-			flashlightGameObj.SetActive(flashlight.IsTurnedOn);
+			flashlightUIText.text = flashlight.IsTurnedOn ? $"{flashlight.currentBatteryLife:0.0} %" : "OFF";
+			flashlightGameObj.SetActive(flashlight.IsTurnedOn && !flashlight.OutOfBattery);
 		}
 	}
 
@@ -110,10 +106,10 @@ public class PlayerActions : Singleton<PlayerActions>
 		if (weapons.All(weapon => weapon == null))
 			return;
 
-		if (Input.GetKeyDown(KeyCode.Alpha1))
+		if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.PrimaryWeapon))
 			SwitchWeapon((int)WeaponSlot.Primary);
 
-		if (Input.GetKeyDown(KeyCode.Alpha2))
+		if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.SecondaryWeapon))
 			SwitchWeapon((int)WeaponSlot.Secondary);
 	}
 
@@ -130,7 +126,7 @@ public class PlayerActions : Singleton<PlayerActions>
 			_currentWeapon = null;
 
 			weaponIcon.gameObject.SetActive(false);
-			weaponUI.text = "UNARMED";
+			weaponUIText.text = "UNARMED";
 		}
 		// Else, equip the new weapon.
 		else
@@ -145,10 +141,10 @@ public class PlayerActions : Singleton<PlayerActions>
 			if (_currentWeapon.type == WeaponType.Ranged)
 			{
 				RangedWeapon weapon = _currentWeapon as RangedWeapon;
-				weaponUI.text = $"{weapon.currentAmmo} / {weapon.reserveAmmo}";
+				weaponUIText.text = $"<size=18>{weapon.currentAmmo} <size=12>/{weapon.reserveAmmo}";
 			}
 			else
-				weaponUI.text = _currentWeapon.itemName.ToUpper();
+				weaponUIText.text = _currentWeapon.itemName.ToUpper();
 
 			primaryWeapon.SetActive(_currentWeapon.weaponSlot == WeaponSlot.Primary);
 			secondaryWeapon.SetActive(_currentWeapon.weaponSlot == WeaponSlot.Secondary);
@@ -171,7 +167,7 @@ public class PlayerActions : Singleton<PlayerActions>
 				float x = Mathf.Lerp(_hitpointXOrigin, hitpointXExtent, t);
 				hitPoint.localPosition = new Vector3(x, 0f, 0f);
 
-				if (Input.GetButtonDown("Fire1") && _timeForNextUse <= 0f)
+				if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.Attack) && _timeForNextUse <= 0f)
 				{
 					AudioManager.Instance.Play("Knife Thrust");
 					weaponAnimator.Play("Knife Thrust", 0, 0f);
@@ -183,10 +179,10 @@ public class PlayerActions : Singleton<PlayerActions>
 			case WeaponType.Ranged:
 				RangedWeapon weapon = _currentWeapon as RangedWeapon;
 
-				if (!weapon.isReloading && (InputManager.Instance.GetKeyDown(KeybindingActions.Reload) || weapon.promptReload))
+				if (!weapon.isReloading && (InputManager.Instance.WasPressedThisFrame(KeybindingActions.Reload) || weapon.promptReload))
 					StartCoroutine(ReloadWeapon(weapon));
 
-				if (Input.GetButtonDown("Fire1") && _timeForNextUse <= 0f)
+				if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.Attack) && _timeForNextUse <= 0f)
 				{
 					ShootWeapon(weapon);
 				}
@@ -213,11 +209,10 @@ public class PlayerActions : Singleton<PlayerActions>
 
 		if (weapon.FireBullet(rayOrigin, rayDestination))
 		{
-			AudioManager.Instance.PlayWithRandomPitch("Bullet Shoot", .7f, 1.2f);
+			AudioManager.Instance.PlayWithRandomPitch("Gunshot", .7f, 1.2f);
 			CameraShaker.Instance.ShakeCamera(2f, .15f);
-			muzzleFlash.SetActive(true);
 
-			weaponUI.text = $"{weapon.currentAmmo} / {weapon.reserveAmmo}";
+			weaponUIText.text = $"<size=18>{weapon.currentAmmo} <size=12>/{weapon.reserveAmmo}";
 			_timeForNextUse = weapon.useSpeed;
 		}
 	}
@@ -233,13 +228,13 @@ public class PlayerActions : Singleton<PlayerActions>
 			yield break;
 		}
 
-		weaponUI.text = "RELOADING...";
+		weaponUIText.text = "RELOADING...";
 
 		yield return new WaitForSeconds(weapon.reloadTime);
 
 		weapon.StandardReload();
 
-		weaponUI.text = $"{weapon.currentAmmo} / {weapon.reserveAmmo}";
+		weaponUIText.text = $"<size=18>{weapon.currentAmmo} <size=12>/{weapon.reserveAmmo}";
 	}
 
 	private void OnDrawGizmosSelected()

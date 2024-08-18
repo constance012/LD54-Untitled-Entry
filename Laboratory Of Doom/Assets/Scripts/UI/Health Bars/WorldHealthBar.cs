@@ -26,7 +26,7 @@ public class WorldHealthBar : HealthBar
 		transform.SetParent(worldCanvas.transform);
 	}
 
-	private void Update()
+	private void LateUpdate()
 	{
 		transform.position = worldPos.position;
 	}

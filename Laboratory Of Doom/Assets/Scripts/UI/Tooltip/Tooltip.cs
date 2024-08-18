@@ -1,29 +1,26 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 public class Tooltip : MonoBehaviour
 {
 	[Header("Position Settings"), Space]
 	[SerializeField] private Vector2 pivotOffet;
 
-	[Header("References"), Space]
-	[Header("Texts")]
-	[Space]
+	[Header("Text References"), Space]
 	[SerializeField] private TextMeshProUGUI header;
 	[SerializeField] private TextMeshProUGUI content;
 
-	[Header("Others")]
-	[Space]
+	[Header("UI Component References"), Space]
 	[SerializeField] private LayoutElement layoutElement;
 	[SerializeField] private RectTransform rectTransform;
+	[SerializeField] private CanvasGroup canvasGroup;
 
-	private void Awake()
+	private void OnEnable()
 	{
-		header = transform.Find("Header").GetComponent<TextMeshProUGUI>();
-		content = transform.Find("Content").GetComponent<TextMeshProUGUI>();
-		layoutElement = GetComponent<LayoutElement>();
-		rectTransform = GetComponent<RectTransform>();
+		canvasGroup.alpha = 0f;
+		canvasGroup.DOFade(1f, .5f);
 	}
 
 	// Update is called once per frame
@@ -56,7 +53,7 @@ public class Tooltip : MonoBehaviour
 		content.text = contentText.ToUpper();
 
 		// And finally, toggle the Layout Element depending on the width.
-		layoutElement.enabled = (header.preferredWidth > layoutElement.preferredWidth ||
-									content.preferredWidth > layoutElement.preferredWidth);
+		layoutElement.enabled = header.preferredWidth > layoutElement.preferredWidth ||
+								content.preferredWidth > layoutElement.preferredWidth;
 	}
 }

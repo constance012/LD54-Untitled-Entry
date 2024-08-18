@@ -16,9 +16,6 @@ public abstract class Entity : MonoBehaviour
 	[SerializeField] protected float damageFlashTime;
 	[SerializeField] protected float knockBackRes;
 
-	[Header("Effects"), Space]
-	public GameObject deathEffect;
-
 	// Protected fields.
 	protected Material _mat;
 	protected int _currentHealth;
@@ -38,6 +35,8 @@ public abstract class Entity : MonoBehaviour
 		DamageTextStyle style = weakpointHit ? DamageTextStyle.Critical : DamageTextStyle.Normal;
 		DamageText.Generate(dmgTextPrefab, dmgTextLoc.position, style, amount.ToString());
 
+		EffectInstantiator.Instance.Instantiate<ParticleSystem>(EffectType.CreatureImpact, transform.position, transform.right);
+
 		StartCoroutine(TriggerDamageFlash());
 		StartCoroutine(BeingKnockedBack(attackerPos, knockBackStrength));
 
@@ -47,15 +46,7 @@ public abstract class Entity : MonoBehaviour
 
 	public virtual void Die()
 	{
-		if (deathEffect != null)
-		{
-			GameObject effect = Instantiate(deathEffect, transform.position, Quaternion.identity);
-			effect.transform.localScale = transform.localScale;
-			
-			// Destroy effect here.
-		}
-
-		Destroy(gameObject);
+		EffectInstantiator.Instance.Instantiate<ParticleSystem>(EffectType.CreatureDeath, transform.position, Quaternion.identity);
 	}
 
 	protected IEnumerator TriggerDamageFlash()

@@ -1,34 +1,30 @@
-﻿using System.Collections;
-using System.Collections.Specialized;
-using TMPro;
-using UnityEngine;
-using UnityEngine.Rendering.Universal;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using DG.Tweening;
 
 public class HealthBar : MonoBehaviour
 {
-	[Header("References"), Space]
+	[Header("UI References"), Space]
 	[SerializeField] private Slider mainSlider;
 	[SerializeField] private Slider fxSlider;
-
 	[Space, SerializeField] private TextMeshProUGUI displayText;
 
-	[Header("Configuration"), Space]
+	[Header("Colors and Gradients"), Space]
 	[SerializeField] private Gradient healthGradient;
+	[Space, SerializeField] private Color healthIncreaseColor;
+	[SerializeField] private Color healthDecreaseColor;
 
 	[Header("Effect Settings"), Space]
 	[SerializeField] private float fxDelay;
 	[SerializeField] private float fxDuration;
 
-	
-	[Space, SerializeField] private Color healthIncreaseColor;
-	[SerializeField] private Color healthDecreaseColor;
+	public bool IsPreviousEffectActive => _fxTween.IsActive();
 
 	// Private fields.
-	private float _fxSmoothVel;
 	private Image _mainFillRect;
 	private Image _fxFillRect;
-	private Coroutine _fxCoroutine;
+	private Tween _fxTween;
 
 	protected virtual void Awake()
 	{
@@ -38,9 +34,6 @@ public class HealthBar : MonoBehaviour
 
 	public void SetCurrentHealth(int current)
 	{
-		if (_fxCoroutine != null)
-			StopCoroutine(_fxCoroutine);
-
 		// Health decreasing.
 		if (current <= mainSlider.value)
 		{
@@ -59,7 +52,10 @@ public class HealthBar : MonoBehaviour
 
 		displayText.text = $"{current} / {mainSlider.maxValue}";
 
-		_fxCoroutine = StartCoroutine(PerformEffect());
+		if (IsPreviousEffectActive)
+			_fxTween.Kill(true);
+
+		_fxTween = PerformEffect();
 	}
 
 	public void SetMaxHealth(int max, bool initialize = true)
@@ -71,33 +67,27 @@ public class HealthBar : MonoBehaviour
 		{
 			mainSlider.value = max;
 			fxSlider.value = max;
+
+			_mainFillRect.color = healthGradient.Evaluate(mainSlider.normalizedValue);
 			displayText.text = $"{max} / {max}";
 		}
 	}
 
-	private IEnumerator PerformEffect()
+	private Tween PerformEffect()
 	{
-		yield return new WaitForSeconds(fxDelay);
-
 		if (_fxFillRect.color == healthIncreaseColor)
 		{
-			while (fxSlider.value != mainSlider.value)
-			{
-				yield return null;
+			Sequence sequence = DOTween.Sequence();
 
-				mainSlider.value = Mathf.SmoothDamp(mainSlider.value, fxSlider.value, ref _fxSmoothVel, fxDuration);
-				_mainFillRect.color = healthGradient.Evaluate(mainSlider.normalizedValue);
-			}
+			sequence.Append(mainSlider.DOValue(fxSlider.value, fxDuration).SetEase(Ease.OutCubic))
+					.Join(_mainFillRect.DOColor(healthGradient.Evaluate(fxSlider.normalizedValue), fxDuration))
+					.SetDelay(fxDelay);
+
+			return sequence;
 		}
-
 		else
 		{
-			while (fxSlider.value != mainSlider.value)
-			{
-				yield return null;
-
-				fxSlider.value = Mathf.SmoothDamp(fxSlider.value, mainSlider.value, ref _fxSmoothVel, fxDuration);
-			}
+			return fxSlider.DOValue(mainSlider.value, fxDuration).SetEase(Ease.OutCubic).SetDelay(fxDelay);
 		}
 	}
 }

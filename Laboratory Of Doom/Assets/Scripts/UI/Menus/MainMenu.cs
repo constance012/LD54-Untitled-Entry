@@ -1,6 +1,4 @@
-﻿using CSTGames.DataPersistence;
-using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
@@ -24,12 +22,14 @@ public class MainMenu : MonoBehaviour
 		}
 	}
 
+	// Callback method for the start button.
 	public void StartGame()
 	{
 		SceneManager.LoadSceneAsync("Scenes/Base Scene");
 		//GameDataManager.Instance.LoadGame(false);
 	}
 
+	// Callback method for the quit button.
 	public void QuitGame()
 	{
 		Debug.Log("Quiting player...");

@@ -6,13 +6,11 @@ public class ClickableObject : MonoBehaviour, IPointerClickHandler, IPointerDown
 {
 	public enum StorageType { Inventory, Chest }
 
-	[Header("Storage Type")]
-	[Space]
+	[Header("Storage Type"), Space]
 	public StorageType storageType;
 	[ReadOnly] public ItemContainer currentStorage;
 
-	[Header("References")]
-	[Space]
+	[Header("References"), Space]
 	public Item dragItem;
 	[SerializeField] private GameObject droppedItemPrefab;
 	[SerializeField] private Transform player;
@@ -22,6 +20,7 @@ public class ClickableObject : MonoBehaviour, IPointerClickHandler, IPointerDown
 	public bool FromSameStorageSlot<TSlot>() where TSlot : ContainerSlot => _currentSlot.GetType() == typeof(TSlot);
 
 	// Private fields.
+	private Transform _parentCanvas;
 	private ContainerSlot _currentSlot;
 	private Image _icon;
 	private TooltipTrigger _tooltip;
@@ -47,11 +46,12 @@ public class ClickableObject : MonoBehaviour, IPointerClickHandler, IPointerDown
 
 	private void Awake()
 	{
+		currentStorage = GetComponentInParent<Inventory>();
+
+		_parentCanvas = GetComponentInParent<Canvas>().transform;
+		_currentSlot = GetComponentInParent<ContainerSlot>();
 		_icon = transform.GetComponentInChildren<Image>("Icon");
 		_tooltip = GetComponentInParent<TooltipTrigger>();
-
-		currentStorage = GetComponentInParent<Inventory>();
-		_currentSlot = GetComponentInParent<ContainerSlot>();
 		
 		player = GameObject.FindWithTag("Player").transform;
 	}
@@ -198,7 +198,7 @@ public class ClickableObject : MonoBehaviour, IPointerClickHandler, IPointerDown
 
 	private void CreateClone()
 	{
-		Clone = Instantiate(gameObject, transform.root);
+		Clone = Instantiate(gameObject, _parentCanvas);
 
 		Clone.GetComponent<RectTransform>().pivot = new Vector2(.48f, .55f);
 

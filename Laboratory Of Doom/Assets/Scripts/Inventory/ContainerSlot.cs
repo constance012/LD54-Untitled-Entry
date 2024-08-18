@@ -4,8 +4,7 @@ using UnityEngine.UI;
 
 public abstract class ContainerSlot : MonoBehaviour
 {
-	[Header("Current Item")]
-	[Space]
+	[Header("Current Item"), Space]
 	public Item currentItem;
 
 	// Protected fields.
@@ -22,23 +21,19 @@ public abstract class ContainerSlot : MonoBehaviour
 		tooltip = GetComponent<TooltipTrigger>();
 	}
 
+	private void Start()
+	{
+		icon.gameObject.SetActive(false);
+	}
+
 	public virtual void AddItem(Item newItem)
 	{
 		currentItem = newItem;
 
 		icon.sprite = currentItem.icon;
-		icon.enabled = true;
-
-		if (currentItem.stackable)
-		{
-			quantity.text = currentItem.quantity.ToString();
-			quantity.enabled = true;
-		}
-		else
-		{
-			quantity.text = "1";
-			quantity.enabled = false;
-		}
+		icon.gameObject.SetActive(true);
+		
+		quantity.text = currentItem.stackable ? currentItem.quantity.ToString() : "";
 
 		tooltip.header = currentItem.itemName;
 		tooltip.content = currentItem.ToString();
@@ -50,10 +45,9 @@ public abstract class ContainerSlot : MonoBehaviour
 		currentItem = null;
 
 		icon.sprite = null;
-		icon.enabled = false;
+		icon.gameObject.SetActive(false);
 
 		quantity.text = "";
-		quantity.enabled = false;
 
 		tooltip.header = "";
 		tooltip.content = "";

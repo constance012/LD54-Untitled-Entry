@@ -2,12 +2,11 @@ using UnityEngine;
 
 public class ItemPickup : Interactable
 {
-	[Header("Current Item Info")]
-	[Space]
-
+	[Header("Current Item Info"), Space]
 	[Tooltip("The scriptable object represents this item.")]
 	public Item itemSO;
 
+	// Private fields.
 	private Item _currentItem;
 
 	private void Start()
@@ -15,7 +14,7 @@ public class ItemPickup : Interactable
 		_currentItem = Instantiate(itemSO);
 		_currentItem.name = itemSO.name;
 
-		spriteRenderer.sprite = _currentItem.icon;		
+		_spriteRenderer.sprite = _currentItem.icon;		
 	}
 
 	protected override void CheckForInteraction(float mouseDistance, float playerDistance)
@@ -35,7 +34,7 @@ public class ItemPickup : Interactable
 	{
 		base.TriggerInteraction(playerDistance);
 
-		if (InputManager.Instance.GetKeyDown(KeybindingActions.Interact))
+		if (InputManager.Instance.WasPressedThisFrame(KeybindingActions.Interact))
 			Interact();
 	}
 
@@ -46,14 +45,9 @@ public class ItemPickup : Interactable
 		Pickup();
 	}
 
-	public override void ExecuteRemoteLogic(bool state)
-	{
-		
-	}
-
 	protected override void CreatePopupLabel()
 	{
-		Transform foundLabel = worldCanvas.transform.Find("Popup Label");
+		Transform foundLabel = _worldCanvas.transform.Find("Popup Label");
 
 		string itemName = _currentItem.itemName;
 		int quantity = _currentItem.quantity;
@@ -63,16 +57,16 @@ public class ItemPickup : Interactable
 		if (foundLabel == null)
 		{
 			base.CreatePopupLabel();
-			clone.SetObjectName(itemName, quantity, textColor);
+			_clone.SetObjectName(itemName, quantity, textColor);
 		}
 
 		// Otherwise, append to the existing one.
 		else
 		{
-			clone = foundLabel.GetComponent<InteractionPopupLabel>();
+			_clone = foundLabel.GetComponent<InteractionPopupLabel>();
 
-			clone.SetObjectName(itemName, quantity, textColor, true);
-			clone.RestartAnimation();
+			_clone.SetObjectName(itemName, quantity, textColor, true);
+			_clone.RestartAnimation();
 		}
 	}
 
@@ -80,7 +74,7 @@ public class ItemPickup : Interactable
 	{
 		Debug.Log("You're picking up a(n) " + _currentItem.itemName);
 
-		Destroy(clone.gameObject);
+		Destroy(_clone.gameObject);
 
 		if (Inventory.Instance.Add(_currentItem))
 		{

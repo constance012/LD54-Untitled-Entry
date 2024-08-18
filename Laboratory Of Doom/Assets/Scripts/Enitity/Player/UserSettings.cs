@@ -8,19 +8,19 @@ public static class UserSettings
 	#region Audio Settings
 	public static float MasterVolume
 	{
-		get { return PlayerPrefs.GetFloat("MasterVolume", 0f); }
+		get { return PlayerPrefs.GetFloat("MasterVolume", 1f); }
 		set { PlayerPrefs.SetFloat("MasterVolume", value); }
 	}
 
 	public static float MusicVolume
 	{
-		get { return PlayerPrefs.GetFloat("MusicVolume", 0f); }
+		get { return PlayerPrefs.GetFloat("MusicVolume", 1f); }
 		set { PlayerPrefs.SetFloat("MusicVolume", value); }
 	}
 
 	public static float SoundsVolume
 	{
-		get { return PlayerPrefs.GetFloat("SoundsVolume", 0f); }
+		get { return PlayerPrefs.GetFloat("SoundsVolume", 1f); }
 		set { PlayerPrefs.SetFloat("SoundsVolume", value); }
 	}
 	#endregion
@@ -75,9 +75,9 @@ public static class UserSettings
 		switch (section)
 		{
 			case SettingSection.Audio:
-				MasterVolume = 0f;
-				MusicVolume = 0f;
-				SoundsVolume = 0f;
+				MasterVolume = 1f;
+				MusicVolume = 1f;
+				SoundsVolume = 1f;
 				break;
 
 			case SettingSection.Graphics:
@@ -93,9 +93,9 @@ public static class UserSettings
 				break;
 
 			case SettingSection.All:
-				MasterVolume = 0f;
-				MusicVolume = 0f;
-				SoundsVolume = 0f;
+				MasterVolume = 1f;
+				MusicVolume = 1f;
+				SoundsVolume = 1f;
 
 				QualityLevel = 3;
 				ResolutionIndex = 7;

@@ -1,46 +1,29 @@
-using System.Collections;
 using UnityEngine;
 
-public class TooltipHandler : MonoBehaviour
+public class TooltipHandler : Singleton<TooltipHandler>
 {
-	private static TooltipHandler Instance;
-
 	[SerializeField] private Tooltip tooltip;
-	private bool isShowed;
 	
-	private void Awake()
-	{
-		tooltip = GetComponentInChildren<Tooltip>(true);
-		
-		if (Instance == null)
-			Instance = this;
-		else
-		{
-			Debug.LogWarning("More than one Instance of Tooltip Handler found!! Destroy the newest one.");
-			Destroy(gameObject);
-			return;
-		}
-	}
+	// Private fields.
+	private bool _isShowed;
 
-	public static IEnumerator Show(string contentText, string headerText = "", float delay = .2f)
+	public static void Show(string contentText, string headerText = "")
 	{
-		if (!Instance.isShowed)
+		if (!Instance._isShowed)
 		{
 			Instance.tooltip.SetText(contentText, headerText);
 
-			yield return new WaitForSeconds(Mathf.Clamp(delay, .2f, delay));
-
 			Instance.tooltip.gameObject.SetActive(true);
-			Instance.isShowed = true;
+			Instance._isShowed = true;
 		}
 	}
 
 	public static void Hide()
 	{
-		if (Instance.isShowed)
+		if (Instance._isShowed)
 		{
 			Instance.tooltip.gameObject.SetActive(false);
-			Instance.isShowed = false;
+			Instance._isShowed = false;
 		}
 	}
 }
