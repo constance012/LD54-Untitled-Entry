@@ -1,42 +1,21 @@
 using UnityEngine;
-using TMPro;
+using DG.Tweening;
 
 public class GameManager : Singleton<GameManager>
 {
-	[Header("References"), Space]
-	[SerializeField] private CanvasGroup inventoryCanvas;
-
-	[Space]
-	[SerializeField] private Animator gameOverScreen;
-	[SerializeField] private Animator victoryScreen;
-
-	[Space]
+	[Header("UI References"), Space]
+	[SerializeField] private CanvasGroup gameOverScreen;
+	[SerializeField] private CanvasGroup victoryScreen;
 	[SerializeField] private HealthBar playerHPBar;
 
 	public bool GameDone { get; private set; }
 
 	private void Start()
 	{
-		ToggleInventory(false);
-	}
+		InputManager.Instance.onBackToMenuAction += (sender, e) => ReturnToMenu();
 
-	private void Update()
-	{
-		if (!PlayerStats.IsDeath)
-		{
-			if (InputManager.Instance.GetKeyDown(KeybindingActions.Inventory))
-				ToggleInventory(!inventoryCanvas.interactable);
-		}
-	}
-
-	public void ToggleInventory(bool state)
-	{
-		inventoryCanvas.alpha = state ? 1f : 0f;
-		inventoryCanvas.blocksRaycasts = state;
-		inventoryCanvas.interactable = state;
-
-		if (!state)
-			Inventory.Instance.OnToggleOff();
+		gameOverScreen.Toggle(false);
+		victoryScreen.Toggle(false);
 	}
 
 	public void UpdateCurrentHealth(int currentHP)
@@ -70,18 +49,18 @@ public class GameManager : Singleton<GameManager>
 	public void ShowGameOverScreen()
 	{
 		GameDone = true;
-		ToggleInventory(false);
+		Inventory.Instance.Toggle(false);
 
-		gameOverScreen.gameObject.SetActive(true);
-		gameOverScreen.Play("Increase Alpha");
+		gameOverScreen.DOFade(1f, .75f)
+					  .OnComplete(() => gameOverScreen.Toggle(true));
 	}
 
 	public void ShowVictoryScreen()
 	{
 		GameDone = true;
-		ToggleInventory(false);
+		Inventory.Instance.Toggle(false);
 
-		victoryScreen.gameObject.SetActive(true);
-		victoryScreen.Play("Increase Alpha");
+		victoryScreen.DOFade(1f, .75f)
+					  .OnComplete(() => victoryScreen.Toggle(true));
 	}
 }

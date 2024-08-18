@@ -10,11 +10,12 @@ public class LevelsManager : Singleton<LevelsManager>
 	private void Start()
 	{
 		CurrentScene = SceneManager.GetActiveScene();
-
 		CurrentLevelIndex = CurrentScene.buildIndex;
 
+		Scene firstLevel = SceneManager.GetSceneByBuildIndex(CurrentLevelIndex + 1);
+
 		// Load the first level.
-		if (!SceneManager.GetSceneByBuildIndex(CurrentLevelIndex + 1).isLoaded)
+		if (CurrentScene != firstLevel)
 			LoadLevel(LevelNavigation.Initialize);
 	}
 
@@ -71,7 +72,8 @@ public class LevelsManager : Singleton<LevelsManager>
 
 		if (!CurrentScene.isLoaded)
 		{
-			AsyncOperation loadSceneOp = SceneManager.LoadSceneAsync(CurrentLevelIndex, LoadSceneMode.Additive);
+			LoadSceneParameters param = new LoadSceneParameters(LoadSceneMode.Additive, LocalPhysicsMode.None);
+			AsyncOperation loadSceneOp = SceneManager.LoadSceneAsync(CurrentLevelIndex, param);
 
 			loadSceneOp.completed += OnLevelCompletedLoading;
 		}

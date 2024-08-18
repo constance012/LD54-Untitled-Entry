@@ -35,4 +35,7 @@ MonoBehaviour:
   range: 0.4
   knockBackStrength: 0.5
   useSpeed: 0.3
-  impactEffect: {fileID: 0}
+  effects:
+    _serializedList:
+    - Key: 1
+      Value: {fileID: 2318170939700439250, guid: f9882c11db3a9cd4081dc7ebc9f1c3e1, type: 3}

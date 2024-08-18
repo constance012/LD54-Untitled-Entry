@@ -20,6 +20,7 @@ public class AudioManager : PersistentSingleton<AudioManager>
 			audio.source.outputAudioMixerGroup = audio.mixerGroup;
 			audio.source.volume = audio.volume;
 			audio.source.pitch = audio.pitch;
+			audio.source.loop = audio.loop;
 		}
 	}
 

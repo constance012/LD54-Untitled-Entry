@@ -1,32 +1,24 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using CSTGames.DataPersistence;
 using UnityEngine.EventSystems;
 using System.Collections;
 
-public class Inventory : ItemContainer, ISaveDataTransceiver, IPointerEnterHandler, IPointerExitHandler
+public class Inventory : ItemContainer, IPointerEnterHandler, IPointerExitHandler
 {
 	public static Inventory Instance { get; private set; }
 
-	[Header("Item Database")]
-	[Space]
-	public ItemDatabase database;
+	[Header("References"), Space]
 	[ReadOnly] public bool insideInventory;
+	[SerializeField] private CanvasGroup canvasGroup;
 
-	[Header("Items List")]
-	[Space]
+	[Header("Items List"), Space]
 	public List<Item> preplacedItems = new List<Item>();
 	public List<Item> items = new List<Item>();
 
-	public bool CanvasActive
-	{
-		get { return transform.parent.gameObject.activeInHierarchy; }
-		set { transform.parent.gameObject.SetActive(value); }
-	}
-
+	// Private fields.
 	private InventorySlot[] _slots;
-	private bool _initializeOnStartup;
+	private bool _initialized;
 
 	protected override void Awake()
 	{
@@ -46,7 +38,7 @@ public class Inventory : ItemContainer, ISaveDataTransceiver, IPointerEnterHandl
 
 	private IEnumerator Start()
 	{
-		if (!_initializeOnStartup)
+		if (!_initialized)
 		{
 			Debug.Log("Inventory initializing...");
 			foreach (Item itemSO in preplacedItems)
@@ -74,10 +66,14 @@ public class Inventory : ItemContainer, ISaveDataTransceiver, IPointerEnterHandl
 			yield return new WaitForSecondsRealtime(.1f);
 			PlayerActions.Instance.SwitchWeapon(0);
 
-			_initializeOnStartup = true;
+			_initialized = true;
 		}
+
+		InputManager.Instance.onToggleInventoryAction += InputManager_OnToggleInventoryAction;
+		Toggle(false);
 	}
 
+	#region Event Methods.
 	public void OnPointerEnter(PointerEventData eventData)
 	{
 		insideInventory = true;
@@ -88,12 +84,24 @@ public class Inventory : ItemContainer, ISaveDataTransceiver, IPointerEnterHandl
 		insideInventory = false;
 	}
 
-	public void OnToggleOff()
+	private void InputManager_OnToggleInventoryAction(object sender, EventArgs e)
+	{
+		if (!PlayerStats.IsDeath)
+			Toggle(!canvasGroup.interactable);
+	}
+
+	public void Toggle(bool state)
 	{
 		Debug.Log("Inventory disabled.");
-		ClickableObject.CleanUpStatics();
-		insideInventory = false;
+		canvasGroup.Toggle(state);
+
+		if (!state)
+		{
+			ClickableObject.CleanUpStatics();
+			insideInventory = false;
+		}
 	}
+	#endregion
 
 	#region Inherited Methods.
 	public override bool Add(Item target, bool forcedSplit = false)
@@ -101,7 +109,7 @@ public class Inventory : ItemContainer, ISaveDataTransceiver, IPointerEnterHandl
 		bool success = base.AddToList(items, target, forcedSplit, out bool outOfSpace);
 
 		if (outOfSpace)
-			GameManager.Instance.ToggleInventory(true);
+			Toggle(true);
 
 		return success;
 	}
@@ -177,18 +185,6 @@ public class Inventory : ItemContainer, ISaveDataTransceiver, IPointerEnterHandl
 	{
 		_slots[slotIndex].UpdateTooltipContent();
 	}
-
-	#region Save and Load Data.
-	public void LoadData(GameData gameData)
-	{
-
-	}
-
-	public void SaveData(GameData gameData)
-	{
-
-	}
-	#endregion
 
 	protected override void ReloadUI()
 	{

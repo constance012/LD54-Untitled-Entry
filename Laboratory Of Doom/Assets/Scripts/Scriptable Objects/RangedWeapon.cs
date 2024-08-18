@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using static UnityEngine.ParticleSystem;
 
 [CreateAssetMenu(fileName = "New Ranged Weapon", menuName = "Inventory/Weapons/Ranged Weapon")]
 public class RangedWeapon : Weapon
@@ -20,9 +19,6 @@ public class RangedWeapon : Weapon
 
 	[Header("Ranged Weapon Type"), Space]
 	public RangedWeaponType rangedWeaponType;
-
-	[Header("Effects"), Space]
-	[SerializeField] private TrailRenderer bulletTracer;
 
 	[Header("Bullet Properties"), Space]
 	public float verticalSpread = 0f;
@@ -78,7 +74,9 @@ public class RangedWeapon : Weapon
 
 		Ray2D ray = new Ray2D(start, rayDirection);
 		
-		TrailRenderer tracer = Instantiate(bulletTracer, start, Quaternion.identity);
+		EffectInstantiator.Instance.Instantiate<ParticleSystem>(EffectType.MuzzleFlash, start, Quaternion.identity);
+		
+		TrailRenderer tracer = EffectInstantiator.Instance.Instantiate<TrailRenderer>(EffectType.BulletTracer, start, Quaternion.identity);
 		tracer.AddPosition(start);
 
 		bool hitSomething = Physics2DExtensions.Raycast(ray, out RaycastHit2D hitInfo, range, LAYER_TO_RAYCAST);
@@ -137,18 +135,6 @@ public class RangedWeapon : Weapon
 		return true;
 	}
 
-	private void InitializeBulletsPerShot(Vector2 direction)
-	{
-		for (int i = 0; i < bulletsPerShot; i++)
-		{
-			float spreadY = CalculateSpreading();
-
-			Vector2 velocity = (direction + new Vector2(0f, spreadY));
-
-			// TODO - implement multiple raycast shootings.
-		}
-	}
-
 	private float CalculateSpreading()
 	{
 		float spreadY = Random.Range(-verticalSpread, verticalSpread);
@@ -157,9 +143,12 @@ public class RangedWeapon : Weapon
 
 	private void ProcessContact(RaycastHit2D hitInfo)
 	{
+		if (hitInfo.collider.gameObject.layer == 8)
+			EffectInstantiator.Instance.Instantiate<ParticleSystem>(EffectType.SolidImpact, hitInfo);
+		
 		if (hitInfo.rigidbody != null)
 		{
-			if (hitInfo.rigidbody.TryGetComponent<EnemyStats>(out EnemyStats enemy))
+			if (hitInfo.rigidbody.TryGetComponent(out EnemyStats enemy))
 			{
 				if (hitInfo.collider.CompareTag("WeakpointTrigger"))
 				{
@@ -169,17 +158,6 @@ public class RangedWeapon : Weapon
 				else
 					enemy.TakeDamage(baseDamage, false, PlayerController.Position, knockBackStrength);
 			}
-		}
-
-		if (impactEffect != null)
-		{
-			ParticleSystem impactObj = Instantiate(impactEffect);
-
-			MainModule main = impactObj.GetMainModuleInChildren("Decal");
-			main.customSimulationSpace = hitInfo.transform;
-
-			impactObj.AlignWithNormal(hitInfo.point, hitInfo.normal);
-			impactObj.Emit(1);
 		}
 	}
 	#endregion

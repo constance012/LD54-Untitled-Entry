@@ -48,7 +48,7 @@ public class InteractionPopupLabel : MonoBehaviour
 	{
 		SetObjectName("");
 
-		keyboardCue.text = InputManager.Instance.GetKeyForAction(KeybindingActions.Interact).ToString().ToUpper();
+		keyboardCue.text = InputManager.Instance.GetDisplayString(KeybindingActions.Interact).ToUpper();
 
 		switch (inputSource)
 		{

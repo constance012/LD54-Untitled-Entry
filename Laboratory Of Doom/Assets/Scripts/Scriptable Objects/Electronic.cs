@@ -18,6 +18,7 @@ public class Electronic : Item
 		if (currentBatteryLife > 0f)
 		{
 			currentBatteryLife -= batteryDepleteRate * deltaTime;
+			currentBatteryLife = Mathf.Max(currentBatteryLife, 0f);
 			Inventory.Instance.UpdateItemTooltip(slotIndex);
 		}
 	}
@@ -25,7 +26,7 @@ public class Electronic : Item
 	public override string ToString()
 	{
 		return base.ToString() + "\n" +
-				$"<b> Remaining battery: {currentBatteryLife.ToString("0.0")}% </b>\n" +
-				$"<b> Press {InputManager.Instance.GetKeyForAction(KeybindingActions.Flashlight)} to turn ON / OFF. </b>";
+				$"<b> Remaining battery: {currentBatteryLife: 0.0}% </b>\n" +
+				$"<b> Press {InputManager.Instance.GetDisplayString(KeybindingActions.Flashlight)} to turn ON / OFF. </b>";
 	}
 }

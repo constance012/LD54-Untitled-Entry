@@ -7,27 +7,21 @@ public class Weapon : Item
 {
 	public enum WeaponType { Melee, Ranged }
 	public enum WeaponSlot { Primary, Secondary }
-	public enum UseType { Automatic, Single, Burst }
 
 	[Header("Weapon Type"), Space]
 	public WeaponType type;
 	public WeaponSlot weaponSlot;
-	public UseType useType;
 
 	[Header("Basic Stats"), Space]
 	public int baseDamage;
-	
+
 	[Range(1f, 10f), Tooltip("The damage multiplier if the weapon hits the enemy's weakpoint.")]
 	public float weakpointMultiplier;
-
 	public float range;
 	public float knockBackStrength;
 
 	[Tooltip("An interval in seconds between each use.")]
 	public float useSpeed;
-
-	[Space]
-	[SerializeField] protected ParticleSystem impactEffect;
 
 	public virtual bool FireBullet(Vector2 rayOrigin, Vector2 rayDestination)
 	{

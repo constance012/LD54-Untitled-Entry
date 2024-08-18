@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityDebug = UnityEngine.Debug;
@@ -20,20 +19,15 @@ public class AStarBrain : MonoBehaviour
 		_closed = new HashSet<Node>();
 	}
 
-	public void StartFindingPath(Vector3 startPos, Vector3 endPos)
-	{
-		StartCoroutine(FindPath(startPos, endPos));
-	}
-
-	private IEnumerator FindPath(Vector3 startPos, Vector3 endPos)
+	public void FindPath(PathRequestData request, Action<PathResult> onFinishedProcessing)
 	{
 		Stopwatch sw = new Stopwatch();
 		sw.Start();
 
 		bool pathFound = false;
 
-		Node startNode = grid.FromWorldPosition(startPos);
-		Node endNode = grid.FromWorldPosition(endPos);
+		Node startNode = grid.FromWorldPosition(request.pathStart);
+		Node endNode = grid.FromWorldPosition(request.pathEnd);
 
 		// Only start finding path if both nodes are walkable.
 		if (startNode.walkable && endNode.walkable)
@@ -51,7 +45,7 @@ public class AStarBrain : MonoBehaviour
 				if (current == endNode)
 				{
 					sw.Stop();
-					UnityDebug.Log($"Path found in: {sw.ElapsedMilliseconds} ms, or {sw.ElapsedTicks} ticks.");
+					//UnityDebug.Log($"Path found in: {sw.ElapsedMilliseconds} ms, or {sw.ElapsedTicks} ticks.");
 					pathFound = true;
 
 					break;
@@ -80,17 +74,16 @@ public class AStarBrain : MonoBehaviour
 			}
 		}
 
-		yield return null;
-
 		// Construct the path.
 		Vector3[] waypoints = new Vector3[0];
 		if (pathFound)
 		{
 			waypoints = ConstructPath(startNode, endNode);
+			pathFound = waypoints.Length > 0;
 		}
 		
 		// Invoke the requester's callback.
-		PathRequester.Instance.InvokeCallback(waypoints, pathFound);
+		onFinishedProcessing(new PathResult(waypoints, pathFound, request.requester, request.callback));
 	}
 
 	private Vector3[] ConstructPath(Node startNode, Node endNode)
@@ -115,25 +108,30 @@ public class AStarBrain : MonoBehaviour
 		List<Vector3> waypoints = new List<Vector3>();
 		Vector2 oldDir = Vector2.zero;
 
-		for (int i = 1; i < path.Count; i++)
+		if (path.Count == 1)
 		{
-			Vector2 newDir = new Vector2(path[i - 1].x - path[i].x, path[i - 1].y - path[i].y);
-
-			if (oldDir != newDir)
-				waypoints.Add(path[i - 1].worldPosition);
-
-			oldDir = newDir;
-
-			// If this is the starting node of the path, means it's at the last index of the list.
-			// Add it as a waypoint if the direction from the provided start node to it changed.
-			if (i == path.Count - 1)
-			{
-				Vector2 dirToLastNode = new Vector2(path[i].x - startNode.x, path[i].y - startNode.y);
-
-				if (oldDir != dirToLastNode)
-					waypoints.Add(path[i].worldPosition);
-			}
+			waypoints.Add(path[0].worldPosition);
 		}
+		else
+			for (int i = 1; i < path.Count; i++)
+			{
+				Vector2 newDir = new Vector2(path[i - 1].x - path[i].x, path[i - 1].y - path[i].y);
+
+				if (oldDir != newDir)
+					waypoints.Add(path[i - 1].worldPosition);
+
+				oldDir = newDir;
+
+				// If this is the starting node of the path, means it's at the last index of the list.
+				// Add it as a waypoint if the direction from the provided start node to it changed.
+				if (i == path.Count - 1)
+				{
+					Vector2 dirToLastNode = new Vector2(path[i].x - startNode.x, path[i].y - startNode.y);
+
+					if (oldDir != dirToLastNode)
+						waypoints.Add(path[i].worldPosition);
+				}
+			}
 
 		return waypoints.ToArray();
 	}

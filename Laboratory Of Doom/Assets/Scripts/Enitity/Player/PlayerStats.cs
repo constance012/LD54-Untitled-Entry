@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerStats : Entity
 {
@@ -19,7 +18,7 @@ public class PlayerStats : Entity
 
 	private void Awake()
 	{
-		_mat = this.GetComponentInChildren<SpriteRenderer>("Graphics").material;
+		_mat = this.GetComponentInChildren<SpriteRenderer>("Graphics/Player Sprite").material;
 	}
 
 	protected override void Start()
@@ -44,7 +43,7 @@ public class PlayerStats : Entity
 		{
 			base.TakeDamage(amount, weakpointHit, attackerPos, knockBackStrength);
 
-			CameraShaker.Instance.ShakeCamera(2.5f, .1f);
+			CameraShaker.Instance.ShakeCamera(2.5f, .15f);
 			GameManager.Instance.UpdateCurrentHealth(_currentHealth);
 
 			_invincibilityTime = invincibilityTime;
@@ -66,16 +65,11 @@ public class PlayerStats : Entity
 
 	public override void Die()
 	{
-		if (deathEffect != null)
-		{
-			IsDeath = true;
+		base.Die();
 
-			GameObject effect = Instantiate(deathEffect, transform.position, Quaternion.identity);
-			effect.transform.localScale = transform.localScale;
-		}
-
+		IsDeath = true;
+		
 		GameManager.Instance.ShowGameOverScreen();
-
 		gameObject.SetActive(false);
 	}
 }

@@ -1,9 +1,12 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-	[Header("Settings")]
+	[Header("References"), Space]
+	[SerializeField] private Rigidbody2D rb2D;
+	[SerializeField] private Animator animator;
+
+	[Header("Movement Settings"), Space]
 	[SerializeField] private float maxSpeed;
 	[SerializeField] private float acceleration;
 	[SerializeField] private float deceleration;
@@ -11,26 +14,15 @@ public class PlayerController : MonoBehaviour
 	public static Vector2 Position { get; private set; }
 
 	// Private fields.
-	private Rigidbody2D _rb2D;
 	private Vector2 _movementDirection;
 	private Vector2 _previousDirection;
 	private float _currentSpeed;
 
-	private void Awake()
-	{
-		_rb2D = GetComponent<Rigidbody2D>();
-	}
-
 	private void Update()
 	{
-		if (GameManager.Instance.GameDone)
-			return;
+		_movementDirection = InputManager.Instance.Read2DVector(KeybindingActions.MoveLeft);
 
-		_movementDirection.x = InputManager.Instance.GetAxisRaw("Horizontal");
-		_movementDirection.y = InputManager.Instance.GetAxisRaw("Vertical");
-		_movementDirection.Normalize();
-
-		if (_movementDirection.magnitude > .1f)
+		if (_movementDirection.sqrMagnitude > .01f)
 			_previousDirection = _movementDirection;
 	}
 	
@@ -41,17 +33,19 @@ public class PlayerController : MonoBehaviour
 
 		UpdateVelocity();
 
-		Position = _rb2D.position;
+		Position = rb2D.position;
 	}
 
 	private void UpdateVelocity()
 	{
-		if (_movementDirection.magnitude > .1f)
+		animator.SetFloat("Speed", rb2D.velocity.sqrMagnitude);
+
+		if (_movementDirection.sqrMagnitude > .01f)
 		{
 			_currentSpeed += acceleration * Time.deltaTime;
 			_currentSpeed = Mathf.Min(maxSpeed, _currentSpeed);
 			
-			_rb2D.velocity = _movementDirection * _currentSpeed;
+			rb2D.velocity = _movementDirection * _currentSpeed;
 		}
 
 		else if (_currentSpeed > 0f)
@@ -59,7 +53,7 @@ public class PlayerController : MonoBehaviour
 			_currentSpeed -= deceleration * Time.deltaTime;
 			_currentSpeed = Mathf.Max(0f, _currentSpeed);
 
-			_rb2D.velocity = _previousDirection * _currentSpeed;
+			rb2D.velocity = _previousDirection * _currentSpeed;
 		}
 	}
 }

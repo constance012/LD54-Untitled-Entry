@@ -11,9 +11,6 @@ public class EnemyStats : Entity
 	[Header("Enemy Stats"), Space]
 	[SerializeField] private int damage;
 	[SerializeField] private float knockBackStrength;
-
-	[Space]
-	[SerializeField] private Transform centerPivot;
 	[SerializeField] private Vector2 attackRange;
 	[SerializeField] private LayerMask hitLayer;
 
@@ -26,7 +23,7 @@ public class EnemyStats : Entity
 
 	private void Awake()
 	{
-		_mat = this.GetComponentInChildren<SpriteRenderer>("Graphics (Center)").material;
+		_mat = this.GetComponentInChildren<SpriteRenderer>("Graphics").material;
 		ID = Guid.NewGuid().ToString();
 	}
 
@@ -43,7 +40,7 @@ public class EnemyStats : Entity
 
 	private void LateUpdate()
 	{
-		int hitColliders = Physics2D.OverlapBox(centerPivot.position, attackRange, 0f, _contactFilter, _hitObjects);
+		int hitColliders = Physics2D.OverlapBox(transform.position, attackRange, 0f, _contactFilter, _hitObjects);
 
 		PlayerStats player = null;
 
@@ -52,11 +49,13 @@ public class EnemyStats : Entity
 			if (_hitObjects[i] == null)
 				continue;
 
-			LevelsNavigationDoor door = _hitObjects[i].GetComponent<LevelsNavigationDoor>();
-			player = _hitObjects[i].GetComponent<PlayerStats>();
+			player = _hitObjects[i].GetComponentInParent<PlayerStats>();
 			
-			if (door != null && !door.isOpened)
+			if (_hitObjects[i].TryGetComponent(out LevelsNavigationDoor door) && !door.isOpened)
+			{
+				Debug.Log(door.name);
 				return;
+			}
 		}
 
 		if (player != null)
@@ -76,14 +75,14 @@ public class EnemyStats : Entity
 
 	public override void Die()
 	{
-		Destroy(healthBar.gameObject);
-
 		base.Die();
+		Destroy(healthBar.gameObject);
+		Destroy(gameObject);
 	}
 
 	private void OnDrawGizmosSelected()
 	{
 		Gizmos.color = Color.white;
-		Gizmos.DrawWireCube(centerPivot.position, attackRange);
+		Gizmos.DrawWireCube(transform.position, attackRange);
 	}
 }
